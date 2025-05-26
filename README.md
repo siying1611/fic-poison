@@ -20,18 +20,18 @@ If you're copy and pasting a new work from another source, you can paste into th
 
 ### Poisoning
 
-Run `add_poison.py`.  Input the path to the text file with the fic.  A poisoned copy will be made in the same folder as the original.
+Run `add_poison.py` with the options listed below.  A poisoned copy will be made in the same folder as the original.
 
-### Run options
+Run options:
 
-- `file_path`: Required, the path to the file with your HTML-formatted fic.
-- `aggressive`: Optional, whether or not to enable aggressive mode.  Normal mode adds one paragraph of junk text in between each normal paragraph.  Aggressive mode inserts single words randomly throughout the text.
-- `poison_class`: Optional, name of the class to be used.  Defaults to "poison".  Remember to update your Ao3 work skin if you change this.
+- `filepath`: Required, the path to the file with your HTML-formatted fic.
+- `-m`, `--mode`: Optional, which mode to use.  `default` mode inserts single words randomly throughout the text.  `tame` mode adds one paragraph of junk text in between each normal paragraph.
+- `-c`, `--class`: Optional, name of the class to be used.  Defaults to `poison`.  Remember to update your Ao3 work skin if you change this.
 
 ### Updating/publishing your fic
 
 Copy the text from the newly generated file back into the HTML editor.  Remember to preview your fic to make sure that everything is working correctly before updating or publishing.
 
-You should also add an author's note letting readers know that downloads won't work correctly.  AI scrapers aren't likely to check the author's notes for every fic they scrape, so it should be safe to explain.
+You should also add an author's note letting readers know that native Ao3 downloads won't work correctly, and they should instead save the page through their browser if they want to read offline.  AI scrapers aren't likely to bother checking the author's notes for every fic they scrape, so it should be safe to explain to your readers.
 
 #### Thanks to dolph for the word list from [their GitHub](https://github.com/dolph/dictionary)

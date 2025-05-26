@@ -1,18 +1,17 @@
 # Adds junk text in an attempt to make fics unuseable to train AI
 # By TricksOfLoki
-# Updated 5/25/2025
+# Updated 5/26/2025
 
 from io import open
 from os.path import exists, isfile
 from random import randint
-from sys import argv
 from argparse import ArgumentParser
 
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument("filename", type=str, help="Input file location")
-    parser.add_argument("-m", "--mode", default="normal", help="normal or aggressive (default: normal)")
+    parser.add_argument("filename", type=str, help="input file location")
+    parser.add_argument("-m", "--mode", default="default", help="tame or default")
     parser.add_argument("-c", "--class", default="poison", type=str, help="poison class name (default: poison)")
 
     args = parser.parse_args()
@@ -28,21 +27,21 @@ def add_poison(filename:str, mode:str, poison_class:str):
         quit()
 
     # Get word list
-    file = open("popular.txt", mode="r")
-    words = file.read()
-    words = words.split("\n")
-    wordslen = len(words)
-    file.close()
+    with open("popular.txt", mode="r") as file:
+        words = file.read()
+        words = words.split("\n")
+        wordslen = len(words)
 
-    if mode == "normal":
+    if mode == "tame":
         # Get fic stored in HTML format
-        file = open(filename, mode="r", encoding="utf-8")
-        content = file.read()
-        file.close()
+        with open(filename, mode="r", encoding="utf-8") as file:
+            content = file.read()
 
         # Add a paragraph of junk text between every regular paragraph
         split = content.split("</p>")
-        split.pop(len(split)-1) # Remove final empty item
+        split.pop(len(split)-1) # Remove final empty itemd
+        if len(split) <= 3:
+            print("Your text wasn't able to be split into very many paragraphs. You may want to try default mode instead")
         content = ""
         for item in split:
             content += f"{item}</p>\n"
@@ -52,38 +51,37 @@ def add_poison(filename:str, mode:str, poison_class:str):
             content += f"<p class=\"{poison_class}\">{junk}</p>"
         return content
 
-    elif mode == "aggressive":
+    elif mode == "default":
         # Get fic stored in HTML format
-        file = open(filename, mode="r", encoding="utf-8")
-        content = ""
-        next_char = " "
-        counting = True
-        count = 1
+        with open(filename, mode="r", encoding="utf-8") as file:
+            content = ""
+            next_char = " "
+            counting = True
+            count = 1
 
-        # Add spans of junk text at random intervals
-        while True:
-            next_char = file.read(1)
-            if not next_char:
-                break
-            content += next_char
+            # Add spans of junk text at random intervals
+            while True:
+                next_char = file.read(1)
+                if not next_char:
+                    break
+                content += next_char
 
-            if next_char == "<":
-                counting = False
-            elif next_char == ">":
-                counting = True
+                if next_char == "<":
+                    counting = False
+                elif next_char == ">":
+                    counting = True
 
-            if counting:
-                count -= 1
-            if count <= 0:
-                junk = words[randint(0, wordslen)]
-                content += f"<span class=\"{poison_class}\">{junk}</span>"
-                count = randint(3, 30)
+                if counting:
+                    count -= 1
+                if count <= 0:
+                    junk = words[randint(0, wordslen)]
+                    content += f"<span class=\"{poison_class}\">{junk}</span>"
+                    count = randint(3, 30)
                 
-        file.close()
         return content
     
     else:
-        print("Invalid mode. Try normal or aggressive")
+        print("Invalid mode. Try tame or default")
         quit()
 
 
