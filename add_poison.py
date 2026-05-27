@@ -49,29 +49,43 @@ def is_chinese(text: str, portion_threshold: float = 0.2) -> bool:
     return (chinese_count / len(non_ws)) >= portion_threshold
 
 
-def inject_junk_chinese(text: str, poison_class: str = "poison") -> str:
+def inject_junk(text: str, chinese: bool, poison_class: str = "poison") -> str:
     """
-    Inject random CJK junk into a Chinese HTML string at random intervals.
+    Inject random junk into an HTML string at random intervals.
 
-    Each junk fragment is 1–3 randomly sampled CJK Unified Ideograph
-    characters (U+4E00–U+9FFF) wrapped in a span:
+    Each junk fragment is wrapped in a span:
         ``<span class="{poison_class}">…</span>``
 
     Both HTML tags (``< ... >``) and HTML entities (``& ... ;``) are treated
     atomically — the countdown is paused inside both so junk is never inserted
     in the middle of either construct.
 
+    The ``chinese`` flag controls junk generation:
+    - If ``True``, junk consists of 1–3 randomly sampled CJK Unified Ideograph
+      characters (U+4E00–U+9FFF).
+    - If ``False``, junk consists of a single random word drawn from
+      ``popular.txt``.
+
     Args:
-        text:         Chinese HTML string to poison.
+        text:         The input HTML string to poison.
+        chinese:      Whether the text is Chinese. Pass ``is_chinese(text)``
+                      or supply a known value directly.
         poison_class: CSS class applied to every injected ``<span>``.
 
     Returns:
-        The input string with CJK junk ``<span>`` elements inserted at random
+        The input string with junk ``<span>`` elements inserted at random
         positions in the visible text content.
     """
-    def _random_junk() -> str:
-        length = randint(1, 3)
-        return "".join(chr(randint(0x4E00, 0x9FFF)) for _ in range(length))
+    if chinese:
+        def _random_junk() -> str:
+            length = randint(1, 3)
+            return "".join(chr(randint(0x4E00, 0x9FFF)) for _ in range(length))
+    else:
+        with open("popular.txt", mode="r", encoding="utf-8") as f:
+            words = f.read().split("\n")
+        wordslen = len(words)
+        def _random_junk() -> str:
+            return words[randint(0, wordslen)]
 
     result = ""
     in_tag = False
@@ -98,75 +112,6 @@ def inject_junk_chinese(text: str, poison_class: str = "poison") -> str:
             count = randint(3, 30)
 
     return result
-
-
-def inject_junk_non_chinese(text: str, poison_class: str = "poison") -> str:
-    """
-    Inject random English word junk into a non-Chinese HTML string at random
-    intervals.
-
-    Each junk fragment is a single word drawn from ``popular.txt`` wrapped in
-    a span:
-        ``<span class="{poison_class}">…</span>``
-
-    HTML tags (``< ... >``) are treated atomically — the countdown is paused
-    inside them so junk is never inserted in the middle of a tag.
-
-    Args:
-        text:         Non-Chinese HTML string to poison.
-        poison_class: CSS class applied to every injected ``<span>``.
-
-    Returns:
-        The input string with English word junk ``<span>`` elements inserted
-        at random positions in the visible text content.
-    """
-    with open("popular.txt", mode="r", encoding="utf-8") as f:
-        words = f.read().split("\n")
-    wordslen = len(words)
-
-    def _random_junk() -> str:
-        return words[randint(0, wordslen)]
-
-    result = ""
-    in_tag = False
-    count = 1
-
-    for ch in text:
-        result += ch
-
-        if ch == "<":
-            in_tag = True
-        elif ch == ">":
-            in_tag = False
-
-        if not in_tag:
-            count -= 1
-        if count <= 0:
-            result += f"<span class=\"{poison_class}\">{_random_junk()}</span>"
-            count = randint(3, 30)
-
-    return result
-
-
-def inject_junk(text: str, chinese: bool, poison_class: str = "poison") -> str:
-    """
-    Dispatch to :func:`inject_junk_chinese` or :func:`inject_junk_non_chinese`
-    based on the ``chinese`` flag.
-
-    Args:
-        text:         The input HTML string to poison.
-        chinese:      Whether the text is Chinese. Pass ``is_chinese(text)``
-                      or supply a known value directly.
-        poison_class: CSS class applied to every injected ``<span>``.
-
-    Returns:
-        The poisoned string.
-    """
-    if chinese:
-        return inject_junk_chinese(text, poison_class)
-    else:
-        return inject_junk_non_chinese(text, poison_class)
-
 
 
 def add_poison(filename:str, mode:str, poison_class:str):
